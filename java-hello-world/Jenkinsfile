@@ -1,47 +1,55 @@
 pipeline {
     agent any
 
-    tools {
-        maven 'Maven 3'
-        jdk 'JDK 11'
-    }
-
     environment {
-        DOCKER_IMAGE = 'yourdockerhub/hello-world:latest'
+        DOCKER_IMAGE = 'abhik1203'  // Replace with your actual Docker Hub repo
     }
 
     stages {
         stage('Checkout') {
             steps {
-                git 'https://github.com/your-username/java-hello-world.git'
+                // Automatically checks out code from the configured repository
+                checkout scm
             }
         }
 
         stage('Build') {
             steps {
+                // Compile and package the Java application using Maven
                 sh 'mvn clean package'
             }
         }
 
         stage('Test') {
             steps {
+                // Run unit tests
                 sh 'mvn test'
             }
         }
 
         stage('Docker Build') {
             steps {
-                sh 'docker build -t $DOCKER_IMAGE .'
+                script {
+                    // Build a Docker image from the Dockerfile
+                    sh 'docker build -t $DOCKER_IMAGE .'
+                }
             }
         }
 
         stage('Docker Push') {
             steps {
-                withCredentials([string(credentialsId: 'dockerhub-token', variable: 'DOCKER_TOKEN')]) {
-                    sh '''
-                        echo "$DOCKER_TOKEN" | docker login -u yourdockerhub --password-stdin
-                        docker push $DOCKER_IMAGE
-                    '''
+                script {
+                    // Log in to Docker Hub and push the image using Jenkins credentials
+                    withCredentials([usernamePassword(
+                        credentialsId: 'dockerhub-token',
+                        usernameVariable: 'DOCKER_USER',
+                        passwordVariable: 'DOCKER_PASS'
+                    )]) {
+                        sh '''
+                            echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                            docker push $DOCKER_IMAGE
+                        '''
+                    }
                 }
             }
         }
@@ -49,10 +57,11 @@ pipeline {
 
     post {
         always {
+            // Archive the built JAR file for download
             archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
         }
         success {
-            echo 'Pipeline completed successfully!'
+            echo 'Build and deployment successful!'
         }
         failure {
             echo 'Pipeline failed.'
