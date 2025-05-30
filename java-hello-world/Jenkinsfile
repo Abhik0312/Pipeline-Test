@@ -7,21 +7,27 @@ pipeline {
                 checkout scm
             }
         }
+
         stage('Build') {
             steps {
-                sh 'mvn clean package'
+                dir('java-hello-world') {
+                    sh 'mvn clean package'
+                }
             }
         }
+
         stage('Test') {
             steps {
-                sh 'mvn test'  // will pass because no tests are defined
+                dir('java-hello-world') {
+                    sh 'mvn test'
+                }
             }
         }
     }
 
     post {
         always {
-            archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
+            archiveArtifacts artifacts: 'java-hello-world/target/*.jar', fingerprint: true
         }
         success {
             echo 'Build successful!'
@@ -31,3 +37,4 @@ pipeline {
         }
     }
 }
+
