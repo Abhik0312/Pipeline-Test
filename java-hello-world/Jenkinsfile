@@ -1,66 +1,33 @@
 pipeline {
     agent any
 
-    environment {
-        DOCKER_IMAGE = 'abhik1203'  // Your Docker Hub repo/image name
-    }
-
     stages {
         stage('Checkout') {
             steps {
                 checkout scm
             }
         }
-
         stage('Build') {
             steps {
-                dir('java-hello-world') {
-                    sh 'mvn clean package'
-                }
+                sh 'mvn clean package'
             }
         }
-
         stage('Test') {
             steps {
-                dir('java-hello-world') {
-                    sh 'mvn test'
-                }
-            }
-        }
-
-        stage('Docker Build') {
-            steps {
-                // Build docker image from the root since Dockerfile is usually at root, adjust if needed
-                sh "docker build -t $DOCKER_IMAGE ."
-            }
-        }
-
-        stage('Docker Push') {
-            steps {
-                withCredentials([usernamePassword(
-                    credentialsId: 'dockerhub-token',
-                    usernameVariable: 'DOCKER_USER',
-                    passwordVariable: 'DOCKER_PASS'
-                )]) {
-                    sh '''
-                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-                        docker push $DOCKER_IMAGE
-                    '''
-                }
+                sh 'mvn test'  // will pass because no tests are defined
             }
         }
     }
 
     post {
         always {
-            // Archive jar artifact from subfolder target directory
-            archiveArtifacts artifacts: 'java-hello-world/target/*.jar', fingerprint: true
+            archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
         }
         success {
-            echo 'Build and deployment successful!'
+            echo 'Build successful!'
         }
         failure {
-            echo 'Pipeline failed.'
+            echo 'Build failed.'
         }
     }
 }
