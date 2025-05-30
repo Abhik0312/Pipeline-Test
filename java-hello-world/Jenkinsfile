@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = 'abhik1203'  // Your Docker Hub repo
+        DOCKER_IMAGE = 'abhik1203'  // Your Docker Hub repo/image name
     }
 
     stages {
@@ -30,9 +30,8 @@ pipeline {
 
         stage('Docker Build') {
             steps {
-                dir('java-hello-world') {
-                    sh "docker build -t $DOCKER_IMAGE ."
-                }
+                // Build docker image from the root since Dockerfile is usually at root, adjust if needed
+                sh "docker build -t $DOCKER_IMAGE ."
             }
         }
 
@@ -54,6 +53,7 @@ pipeline {
 
     post {
         always {
+            // Archive jar artifact from subfolder target directory
             archiveArtifacts artifacts: 'java-hello-world/target/*.jar', fingerprint: true
         }
         success {
