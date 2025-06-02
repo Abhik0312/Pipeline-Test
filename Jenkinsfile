@@ -2,28 +2,21 @@ pipeline {
     agent any
 
     stages {
-        stage('Build') {
+        stage('Pull Docker Image') {
             steps {
-                sh 'mvn clean package'
+                script {
+                    sh 'docker pull abhik1203/app:latest'
+                }
             }
         }
 
-        stage('Test') {
+        stage('Run Docker Container') {
             steps {
-                sh 'mvn test'
+                script {
+                    // Run the container and print the output
+                    sh 'docker run --rm abhik1203/app'
+                }
             }
-        }
-    }
-
-    post {
-        always {
-            archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
-        }
-        success {
-            echo 'Build successful!'
-        }
-        failure {
-            echo 'Build failed.'
         }
     }
 }
